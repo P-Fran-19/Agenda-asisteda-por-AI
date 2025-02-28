@@ -1,0 +1,2 @@
+const clave = ""
+export { clave }

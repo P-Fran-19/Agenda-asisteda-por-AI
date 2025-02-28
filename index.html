@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planificador Personal Asistido por IA</title>
+
+    <!-- Estilos -->
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.min.css" rel="stylesheet">
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.2/main.min.js"></script>
+</head>
+<body>
+    <!-- Encabezado -->
+    <header>
+        <h1 class="animate__animated animate__fadeInDown">Bienvenido a tu Planificador Personal Asistido por IA</h1>
+        <nav class="animate__animated animate__fadeInLeft">
+            <ul>
+                <li><a href="#perfil" class="nav-link"><i class="fas fa-user"></i> Perfil</a></li>
+                <li><a href="#calendario" class="nav-link"><i class="fas fa-calendar-alt"></i> Calendario</a></li>
+                <li><a href="#tareas" class="nav-link"><i class="fas fa-tasks"></i> Tareas</a></li>
+                <li><a href="#ayuda" class="nav-link"><i class="fas fa-robot"></i> Ayuda IA</a></li>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main>
+        <!-- Sección Perfil -->
+        <section id="perfil">
+            <h2>Perfil de Usuario</h2>
+            <form id="profile-form">
+                <input type="text" id="name" placeholder="Nombre">
+                <input type="email" id="email" placeholder="Email">
+                <button type="submit">Guardar</button>
+            </form>
+            <div id="profile-display" style="display:none;">
+                <p id="display-name"></p>
+                <p id="display-email"></p>
+                <button id="edit-profile">Editar</button>
+            </div>
+        </section>
+        
+        <!-- Sección Calendario -->
+        <section id="calendario" class="animate__animated animate__fadeIn">
+            <h2>Calendario</h2>
+            <div id="calendar"></div>
+            <div id="day-tasks"></div>
+        </section>
+
+        <!-- Sección Tareas -->
+        <section id="tareas" class="animate__animated animate__fadeIn">
+            <h2>Tareas</h2>
+            <div id="tasks">
+                <input type="text" id="new-task" placeholder="Añadir nueva tarea...">
+                <button id="add-task">Añadir</button>
+                <ul id="task-list"></ul>
+                <button id="suggest-task">Sugerir Tarea (IA)</button>
+            </div>
+        </section>
+
+        <!-- Sección Asistencia IA -->
+        <section id="ayuda" class="animate__animated animate__fadeIn">
+        <div class="contenedor">
+            <h1 id="tituloayuda">Ayuda Con AI</h1>
+            <div id="chat">
+                <div id="mensajes" class="mensajes">
+                    <!-- Los mensajes se añadirán dinámicamente aquí -->
+                </div>
+                <div class="input-container">
+                    <textarea id="consulta" placeholder="Escribe tu mensaje aquí..."></textarea>
+                    <button type="button" id="botonConsulta">Enviar</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "@google/generative-ai": "https://esm.run/@google/generative-ai"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import { GoogleGenerativeAI } from "@google/generative-ai";
+        import { clave } from "./key.js";  // Copiar su clave aquí
+
+        const genAI = new GoogleGenerativeAI(clave);
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+        const mensajes = document.getElementById('mensajes');
+        const consulta = document.getElementById('consulta');
+        const botonConsulta = document.getElementById('botonConsulta');
+
+        const desactivarBoton = () => {
+            botonConsulta.disabled = true;
+            botonConsulta.textContent = "Procesando...";
+        };
+
+        const activarBoton = () => {
+            botonConsulta.disabled = false;
+            botonConsulta.textContent = "Enviar";
+        };
+
+        botonConsulta.addEventListener('click', async () => {
+            const mensajeUsuario = consulta.value.trim();
+            if (mensajeUsuario) {
+                // Añadir mensaje del usuario
+                const mensajeElemento = document.createElement('div');
+                mensajeElemento.classList.add('mensaje', 'user');
+                mensajeElemento.textContent = mensajeUsuario;
+                mensajes.appendChild(mensajeElemento);
+
+                // Limpiar textarea y desactivar botón
+                consulta.value = '';
+                mensajes.scrollTop = mensajes.scrollHeight;
+                desactivarBoton();
+
+                try {
+                    const result = await model.generateContent(mensajeUsuario);
+                    const response = await result.response;
+                    const text = await response.text();
+
+                    // Añadir respuesta de la IA
+                    const respuestaElemento = document.createElement('div');
+                    respuestaElemento.classList.add('mensaje', 'respuesta');
+                    respuestaElemento.textContent = text;
+                    mensajes.appendChild(respuestaElemento);
+
+                } catch (error) {
+                    const errorElemento = document.createElement('div');
+                    errorElemento.classList.add('mensaje', 'respuesta');
+                    errorElemento.textContent = 'Error: No se pudo procesar la consulta.';
+                    mensajes.appendChild(errorElemento);
+                } finally {
+                    // Reactivar botón
+                    activarBoton();
+                    mensajes.scrollTop = mensajes.scrollHeight;
+                }
+            }
+        });
+    </script>
+        </section>
+        
+    </main>
+
+    <!-- Pie de Página -->
+    <footer class="animate__animated animate__fadeInUp">
+        <p>&copy; 2025 Planificador IA. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="script.js"></script>
+</body>
+</html>
+
+
+
+
